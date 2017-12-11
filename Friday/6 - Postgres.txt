@@ -1,0 +1,183 @@
+Kube-Native Postgres
+
+Josh Berkus
+Project Atomic Community Lead, Red Hat Inc.
+
+https://github.com/zalando/patroni
+
+Thanks Zalando!
+db team at zalando did the majority of the work
+
+goals:
+Make deploying postgresql on k8s as boring as deploying nginx
+
+explain patroni
+patroni: the old way
+patroni: kube-native
+patroni operator
+other examples: crunchy operator
+
+what changes?
+    1. tighter kube integration
+    2. operator
+    3. in production
+
+some terms
+postgres = database
+patroni - an HA daemon
+spilo: (spy-lo) a container image containing both of the above plus utils
+
+patroni
+incontainer daemon that
+    controls postgresql start top and replciation
+    automates failover
+    supplies a management api
+
+why?
+simplicity
+usability
+availability
+
+
+simplicity goals
+one container image
+rely on kubernetes
+"just works" defaults
+
+usability
+management port: 8008
+configuration & plugins
+no limitations on postgres
+
+plugins for diff cloud envs
+    ex - plugins for different backup tools
+
+availablity
+fully automated replications and failover
+
+failover
+master vanishes
+replicas grab lock (endpoint)
+winner checks replication status
+update configmap
+replicas re-master
+
+demo
+
+
+create one svc for write that will redirect to master
+another service lb to all endpoints for readonly
+
+
+Operators
+why?
+    self-documenting clusters
+    all config available via the kubernetes api
+    no kube-yaml requried for deployment
+    dbs require scheduled work, etc.
+
+why?
+If I have to create a minfest anyways, why not have it run everything?
+
+Spilo operator
+Install operator
+Create manifest for each cluster
+Modify manifest to modify cluster
+
+Need to create configmap, svc account, then operator
+then create manifest to create instance of the postgres cluster
+
+Crunchy Postgres Operator
+command and control operator
+powers Crunchy container suite
+more "enterprise" postgres install
+
+pgo create cluster mycluster
+pgo scale mycluster --replica-count=3
+pgo show cluster mycluster
+pgo create backup mycluster
+
+container suite has a bunch of other things in it
+
+operator comparison
+feature
+status
+control
+deploy
+scale
+docs
+cli
+openshift
+upgrades
+
+spilo
+alpha
+manifest
+yes
+yes
+no
+minimal
+no yes
+
+crunchy
+prod
+command
+yes
+yes
+yes
+full
+yes
+yes
+
+planned future work
+merge k8s branch into main patroni
+integrate operator and k8s branch
+openshift-compatibility
+prom integration
+packaging accessories (POWA (postgres perf analysis), pgAdmin, etc)
+complex replication topologies
+
+crazy
+istio integration
+merge operator & patronictl?
+use metaparticle lock CRD?
+pg 10 logical replication?
+workloads API?
+    be less reliant on operator custom controller behavior?
+
+kube limitations:
+multi-DC clusters
+    (needs StatefulSet Federation)
+leader election?
+upgrading StatefulSets
+kubectl extensibility
+
+
+contribs wanted:
+github.com/zalando/patroni
+most communication is via github issues
+
+postgres IRC
+
+other resources
+@fuzzychef
+jberkus - databasesoup.com
+jberkus.github.io
+
+
+default is replication lag
+
+patroni is compat with turning syncronous replication on
+reccommend postgres10 with synchronous quorum replication on
+
+users:
+use the operator + manifest to create the users
+
+if you use patroni without the operator
+create the users when you create the cluster
+login as superuser and create it.
+
+
+
+
+

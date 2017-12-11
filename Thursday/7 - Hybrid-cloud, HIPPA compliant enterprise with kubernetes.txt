@@ -1,0 +1,112 @@
+7 - Hybrid-cloud, HIPPA compliant enterprise with kubernetes
+
+steve sloka
+
+HIPPA RULES
+encryption at REST
+encryption in TRANSIT
+Auditing to the user
+BAA (Business Associate Agreement)
+
+On-prem
+k8s infra
+    red hat atomic
+    coreos techtonic
+storage
+    nfs
+    local storage
+
+lb
+    f5 - nodeport
+
+workloads
+    ci/ci (gitlab runners + jenkins)
+    local "Agents"
+        data collection
+        data proxies
+
+cloud infra
+    aws
+    single region multi-az
+    multiple worker auto-scaling groups (ASG)
+    cloud formation + core os
+    ecr docker reg
+    classic elb
+    vpn to on prem
+
+github.com/upmc-enterprises/kubernetes-on-aws
+
+OpsWorks to manage ssh keys
+
+not everything is compliant
+new services
+internate gateway -> ELB (VPN)
+
+IGW -> ELB (not encrypted)
+
+AWS to the rescue
+
+mike kuentz - senior solutions architect
+@mkuentz
+kuentzm@amazon.com
+
+
+k8s workloads
+stateless applications
+easy?
+    self-contained
+    no storage
+    deps are outside of scope
+    easily scheduled/scales
+    implementd via k8s deployments
+    just need encryption in trasnit and youre good
+
+stateful application struggles
+    how manage persistent storage?
+    resize/upgrade?
+    reconfigure - templating
+
+statefulsets
+    allow for persistent sotrage replicas to have an identiy
+    one persistant volume per claim
+
+how manage persistent storage?
+    as long as you stay in the same AZ volume will follow you around?
+
+An operator is an application-specific controller that extends the k8s api to create configure and manage instances of complex stateful applications on behalf of a kubernetes user
+
+make it work like a cloud provided offering
+
+
+elastic-operator
+    https://github.com/upmc-enterprises/elasticsearch-operator
+    full tls
+    automatic cert generation
+    encrypted EBS volumes
+    communication TLS (SearchGuard*)
+    span az in AWS (creation and scaling)
+    snapshots to s3
+    deploy add-ons automatically
+    kibana/cerebro
+
+there is some work to do
+    shard / zone allocation
+    elastic cluster status
+    rolling restarts
+    upgrades
+
+kong-operator
+    github.com/upmc-enterprises/kong-operator
+    open source api gateway
+    isolate traffic into our applications
+    handles authentication (HMAC) for clients
+
+configuration for aplications stored as files (TPRs)
+    checked into source
+    code reviewd
+    http is not easily reproducible
+
+network policies
+    limit access to api
+    (network policies)
+

@@ -1,0 +1,56 @@
+HBO/TF-Modules//k8s/minion
+
+
+first type nodeport for each server
+limit 50 elb per ASG
+keep track of ELS yourself
+
+
+next: ingress
+type: clusterip + ingress
+whose 500s are those anyways?
+hard to keep up with burst traffic
+internal/external
+
+type: loadbalancer
+aws api rate limits
+security group customization issue - resolved in v1.8
+    kubernets#49805
+not affected by 50 ELB limit
+
+production: nodeport + ELB + k8s SD
+non-production = cluster IP + ingress + shared elb
+
+
+kube-dns
+ndots=5
+k8s#33554
+
+dns tunings:
+
+max cache size (dnsmasq) 
+--cache-size=10000
+
+--address=/<domain>/<ipaddr>
+# put in all the local svc discovery to speed up null domains
+
+#internal nameserver (dnsmasq)
+--server=
+
+
+telemetry
+grafana
+graphite + statsd
+elk + fluentd
+splunk forwarder
+prometheus + cAdvisor
+    Not so easy with 300 nodes @ 40 cores each + 20k containers
+    EBS
+        rook
+
+Were we ready?
+load test
+load test
+load test the shit out of it
+search, report, fix, contribute
+

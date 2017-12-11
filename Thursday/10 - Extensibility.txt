@@ -1,0 +1,169 @@
+Eric Tune &
+
+Who should care and why
+
+cluster ops
+distribution creators
+cloud providers
+paas writers
+hw/sw vendors
+k8s core contrib
+all k8s users
+
+-> understand components
+add site-specific policy
+integrate with iaas
+add new apis
+independence from k8s proj.
+closed source extensions
+stabilize the core!
+
+
+extensibility
+kubernetes is:
+open source
+automatable
+extensible
+
+---- but
+forking is (fast big hosted)
+async
+cannot add apis
+cannot change apis
+so many ways to extend
+
+
+kubernetes is:
+an abstraction over ingrastureus
+a framework for declaritive apis and distributed control
+
+12 dozen extension mechanisms
+infra extension mechanisms
+api extension mechanisms
+
+https://goo.gl/2qz8jW
+storage extensions - allow new kinds of volumes for pods
+flex volumes (easy)
+    easiest to write: binary plugin, bash scripts
+    expect it to stick around but not get better
+CSI (container storage interface) (medium)
+    open: docker, kubernetes, mesos, etc
+    easier to deploy/upgrade on top of k8s
+    expect it to stick around to grow
+    alpha in v1.9
+
+
+cloud controller manager
+cloud provider now a separate binary
+    manages instance lifecycle, service ips, lb, etc
+support your own cloud without forking the code, even use
+
+
+device plugins
+    add discrete hardware resources usch as:
+        gpu
+        fpga
+        qrngs
+    name and number of devices reported by kubelet on node object
+
+network plugins
+    connect pods to the network
+    support for them is alpha in k8s
+    open standard: CNI
+        two dozen or so avail (not all support k8s hostport)
+        they work on 6 or so orchestrators
+    (grpc vs binary plugin)
+
+replace the scheduler
+multiple schedulers
+scheduler extender
+    plugin model
+
+secrets
+    encryption at rest - alpha in 1.9
+    store the KEKs in a key store
+        eg vault store, google kms, azure kms
+        alpha planned for 1.10
+        expected to GA by end of 2018
+
+API extensions
+https://goo.gl/AJf3PU
+
+CRD
+CRD + schema
+CRD + schema + validation webhook
+aggregated apiserver
+
+how to choose: zb2ssj
+
+Custom resources
+CRDs to GA in 2018
+completeness
+    schema
+    validation webhooks
+    clsuterRole
+API-wide consistency
+    sub-resources (/status, /scale)
+
+
+Aggregated API Servers
+customize all the things!
+    storage backend
+        time-series data: metrics apiserver
+    admission chain / business logic
+    version conversion
+who?
+    kubernetes developers
+
+
+
+Admission Extensions v1.9 and beyond
+
+what is the admission stack?
+everything on the request path..
+    thats after the permission checks
+    and before the final storage operation
+ideal place for policy enforcement
+
+problem: admission plugins are all compiled-in
+
+admission webhooks!
+    beta in 1.9
+    GA in 2018
+    dynamic configuration
+initializers!
+    alpha
+
+
+
+kube-apiserver
+    flags to config files
+    config files to APIs
+permissions (authz) webhook are expert to medium.
+end goal: fully portable extensions!
+
+
+combining extension mechanisms
+
+CRD + control loop                    = etcd-operator
+CRD + control loop + volume plugin    = rook
+CRD + control loop + network plugin   = calico canal
+CRD + validating admission webhook    = better validation
+
+2018 aspirations for API
+automatic rich CLI/GUI for Custom Resources
+    app definition
+    show status and children
+scale for custom resources
+    use HPA and PDB with operators
+verison conversion for CRDs
+cluster introspection API
+    garbage collector has a resource graph
+
+
+conclusion
+commitment to making and keeping k8s extensible
+    stabilizing extension mechanisms
+    imporoving documentations
+    using existing open standards where suitable
+    offer multiple choices with graded difficulty where needed

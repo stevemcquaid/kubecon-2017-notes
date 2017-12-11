@@ -1,0 +1,73 @@
+Setting sail with istio - youtube channel - https://www.youtube.com/user/lac83/videos
+
+
+Reliable application roll out and operations with Istio
+Lin Sun - IBM - @linsun_unc
+Mander Jog, google @mandarjog
+
+Common Devops challenge 1
+how do i roll out newer version of ms without downtime
+how do i ensure traffic continue to go to current version before the newer version is tested and ready
+
+Challenge 2
+How do i do A/B testing?
+release new version to a subset of users in a precise way
+I have launched B in the dark, but how can i keep B to myself or a small testing group?
+
+Challenge 3
+how do i do canary testing
+how do i test the new version to a subset of users
+how do  i proceed to full rollout after satisfactorying testing period
+
+Other common devops challenges
+things dont always go correctly in production.. how do i inject fault to my ms to prepare myself?
+our teams write svc in diff languages
+nmy serices can only handle certain rate, how can i limit rate
+i need to view what is going on with each of services when crisis arises
+
+launched by IBM Google Lyft in may 2017
+
+intel routing and lb
+controll traffic between svc with dynamic route config
+
+resilience across languages and platform
+shielding app from flaky networks and cscading failures in adverse conditions
+
+secure acess with fleet wide policy enforcement
+appluy org policy to svc
+
+in depth telemetry and reporting
+understand deps between vsc, the nature and flow of traffic between them and id issues
+
+components of istio
+envoy
+pilot
+istio-security (formerly istio-paas?)
+mixer
+
+our sidecar of choice:
+envoy
+c++ L4/L7 proxy
+
+
+rate limiting
+traffic partitioning
+
+telemetry
+monitoring and tracing should not be an afterthought in the infrastructure
+goals:
+    metrics without instrumenting apps
+    consistent metrics across fleet
+    trace flow of requests across services
+    portable across metric backend providers
+
+
+proposed istio deployment controller
+
+zipkin has really cool tracing
+
+
+
+
+
+

@@ -1,0 +1,187 @@
+Kafka Operator - Managing and Operating Kafka Clusters in Kubernetes
+Nenad Bogojevic - Solution Arch, Amadeus
+
+Kafka in k8s
+kafaka cluster
+    each broker has id - need to find each other
+    brokers need persistene to store partition logs
+zookeeper cluster
+    another cluster with persistence
+stateful set
+
+Stateful set refresher
+provide stable pod identity
+provide stable storage
+ordered starup, shutdown
+rolling updates (recently)
+
+Kafka and zookeeper StatefulSet
+1:1 mapping per instance of kafka
+
+discovery service
+    kafka
+    zookeeper
+headless service
+    broker
+
+
+containers
+github.com/Yolean/kubernetes/kafka
+
+Charts
+    contrib tree/stateful sets
+    https://github.com/Yolean/kubernetes-kafka
+
+Operators
+    https://github.com/krallistic/kafka-operator
+    https://github.com/nbogojevic/kafka-operator
+
+Demo time
+    helm chart
+
+Affinity
+Node sleectors
+    using node selector to land instances on machines with good hardware (ssds)
+    node selector: disk: fast
+anti-affinity
+    using anti-affinity to spread instances across different physical machines
+    affinity: podAntiAffinity: preferredDuringSchedulingignoredDuringExecution
+
+Storage
+    persistant storage
+    if your pod restarts it will get same emptyDir, and recover data
+    if pod moves to other node, it will loose data!
+    kafka perf...
+
+Persistence
+    common wisdom
+        use persist volume, otherwise you'll lose Kafka logs
+    relying on kafka replication
+        use empty volume
+            if container crashed, you keep logs
+            if node crashes, rely on replication
+            have enough replicas and brokers
+                5 broker cluster, 2 replicas - you can lopose 1 broker
+    Soon: local persistent volme
+
+Monitoring:
+    readiness prove
+        kafka-broker-api-versions.sh
+        livenexxprobe
+            tcsocket
+        
+Monitoring: prometheus + JMX
+    kafka-containers
+        FROM fabric8/s2i-java
+        ADD kafka
+
+helm install kafka-cluster/ --name kafka-cluster
+    deployment
+        consumer
+        producer
+
+deploy-secured.yaml
+
+
+create topics:
+    anyone can create topic
+    kafka scripts to create the topics
+
+Operators
+    transposing domain knolwegde of SRE/operations into execable code
+
+@Amadeus uses opeerators for:
+    prometherus
+    redis
+    ***workflow****
+    kafka
+
+Provisioning clusters
+    helm charts
+    once platform is set up cluster stays in place
+    we can scale up
+    but scale down, evacuation and upgrades are tricky
+
+topics?
+operating topics means
+    make sure topic exists in targe environments
+    make sure topic is deleted once it isnt used anymore
+    propagage same configuration across envs
+    config retention based on available disk space
+    config clients with creds
+    deliver config and reqs as code/descriptor
+
+
+Topics as code
+configmap or customresource descriving
+    name 
+    partition count
+    replication factor
+    topic properties
+equivalent to provision/unprovision of serviceCatalog in openshift
+
+
+configmap example
+    partitiions:2
+    replication-factor: 6
+    properties: retention-dslkhfas
+
+topics - access-control
+    deployments describe which topic they use via annotations
+    operator assigns user, generates java JAAS config, create secret
+    
+annotation ex
+labels:
+    kafka:operator: inject-creds
+annotations:
+    consumes: input-topic
+
+
+secrets:
+kafka-consumer-kafka-credentials
+kafka-producer-kafka-credentials
+diff creds for producers & consumers (each are bound to a single topic)
+
+
+kafka upgrades
+inter broker protocol
+    set protocol version to current
+    upgrade brokers one by one
+    set protocol version to new
+storage format
+    have consumers on up to date vesion
+    update format version to new
+easy way out: don't upgrade, but re-create?
+
+
+Performance
+dominated by disk IO - using SSD
+    then by network
+    almost never CPU or memory (2-4VCPU, 2-4GB) half for JVM heap
+
+100k messages/sec
+
+getting zookeeper and brokers on the same nodes reduces network - same goes with clients ;)
+
+
+
+
+constraints on # pers volumes/node
+    they dont use persistant vols
+
+how do handle kafka operator upgrade
+    operator is stateless = upgraded out of band
+
+operator watches for changes on configmap - yes?
+
+did you write the operator with java client for k8s?
+
+kafka on baremetal for perf reasons?
+    they run it in vms on k8s
+
+why is headless service needed?
+    statefulset needs it to work properly
+
+can you describe strategy for scaling down?
+    no strategy for scaling down
+    

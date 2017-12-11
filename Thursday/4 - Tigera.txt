@@ -1,0 +1,24 @@
+Spike Curtis
+
+Progress toward zero trust kubernetes networks
+
+kubernetes network policy
+
+
+istio service mesh
+
+mutually authenticated tls sessions
+
+calico support 
+unified policy for secure aplpication connectivity
+
+zero trust network model
+network always assumed to be hostile
+external and internal threasts exist on the network at all times
+network locality is not sufficient for decising trust
+
+github.com/projectcalico/app-policy
+
+istio- sailing to a secure service mesh
+friday 11:55am ballroom A
+

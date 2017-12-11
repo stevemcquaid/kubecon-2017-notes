@@ -1,0 +1,124 @@
+LinkerD
+William Morgan - buoyant community person
+
+
+Borys Pierov NCIB
+HTTP routing with Linkerd
+
+ncbi.nlb. ... .gov
+
+
+http_proxy=linkerd:4140 curl http://foo.l5d.ncbi.nlm.nih.gov
+
+http_proxy = works w/ containers & w/o
+linkerd = /etc/hosts
+foo = service
+l5d.ncbi.nlm.nih.gov = convention
+
+curl -H "Host: foo.http://foo.l5d.ncbi.nlm.nih.gov" http://linkerd:4140
+
+location: /foo
+Request header set Host goo.l5d...
+Proxy pass http://linkerd
+
+routers:
+    - protocol: http
+        dstPrefix: /http
+        identifier:
+            - kind. io.l5g.header.token
+            header: Host
+            interpreter:
+                ...
+servers:
+    - port: 4140
+
+
+location table:
+    /http => /#/rinet/80
+    /http -> /$/domainToPath
+
+    /gov/nih/nlm/ncbi/l5d => /service
+
+    /service => /#consul/.local
+
+    /service/foo => /service/foo-1
+    /service/bar => /service/bar-1
+    /service/baz => /service/baz-1
+
+
+
+Mark Tyrell - homeaway
+mesh@homeaway.com
+
+automatic > manual routing
+
+manual:
+    10s of apps
+    routing by static conf
+    static dns
+    simple lb
+    fixed routing seq
+    global lb > dc lb > app
+    global lb > dc lb > app lb -> app
+    app > dc > 
+
+lagacy app routing
+
+
+Oded Ben
+taboola
+
+oliver
+
+last 6 mo of linkerd
+    focused on grpc specifically
+    not a lot of features to likerd
+    helping people to production
+    moving forward to become hardened prod system
+    swiss army knife of container networking
+    linkerd tcp - small rust proxy - L4 routing
+
+jvm
+runs anywhere
+
+porblems that linkerd solves:
+security
+viz
+routing control
+    
+dtabs?
+generating dtabs with rubia?
+
+load tests are bad until caches warm up
+
+perf contraints of jvm are a brick wall in front of things
+
+linkerdtcp - L4 proxy
+    - RUST
+    - TLS traffic
+    - namerd for svc discovery
+
+conduit:
+narrow surface area unlike linkerd
+
+-----------
+web & cli
+-
+public api
+-
+**CONDUIT**
+-
+proxy api
+-----------
+
+CONDUIT svcs
+telemetry svc (prometheus install coupled with conduit)
+destination svc (talks to k8s api - does svc/endpoint lookups)
+
+want to have routing svcs and other things as well
+
+
+
+
+
+

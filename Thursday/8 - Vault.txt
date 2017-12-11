@@ -1,0 +1,212 @@
+Vault
+
+Solves 3 challenges
+    secrets management
+        eliminate secret sprawl
+    encryption as a service
+        securely store data
+    identity and access management
+        govern secret access
+
+
+
+What is a "Secret"
+anything used fro authn or authz
+    user/pass, api token, tls cert
+sensitive is anything that is confidential
+    ssn, ccn, customer email
+
+how do apps get secrets
+how do umans get secrets
+how are secrets updated
+revoked
+how are secrets used?
+
+
+state of the world
+    secret sprawl
+    decentralized keys
+    limited visibility
+    poorly defined "break glass" procedures
+
+
+vault intro
+
+single source for secrets
+programmatic app access (automated)
+operator access (manual)
+practical security
+modern datacenter friendly
+
+
+vault features
+secure secret storage (in memory, consul, file, rdms, more)
+dynamic secrets
+leasing, renewal and revocation
+auditing
+rich acls
+multiple client authn methods
+
+
+security principles
+confidentially, integrity, availabliity
+least priv ( need to know)
+pric separation (separation of controls)
+priv bracketing ( time limiting access)
+non-repudiation (cant deny actions)
+defense in depth
+
+
+secure secret storage
+data is encrypted in trasit and at rest
+256bit AES in GCM mode
+TLS 1.2 for clients
+no HSM required
+Provides confidentiality and integrity
+
+
+Dynamic Secrets
+Never provide “root” credentials to clients 
+Provide limited access credentials based on role 
+Generated on demand when requested
+leases are enforceable via revocation
+audit trail can identify point of compromise
+
+pluggable backends
+grow support with time
+split from core (defense in depth)
+aws
+consul
+postgresql
+ssh
+cassandra
+custom
+
+
+leasing renewal, revocation
+every dynamic secret ( and token) has a lease
+secrets are revoked at the end of the lease unless renewed
+secrets may be reboked early by operators
+    break glass procedure
+    enforceable leases
+
+why leasing?
+privilege bracketing
+non-repudiation
+secret updates bounded
+enables revocation
+
+
+Authenticating, Authorizing, Auditing (AAA)
+authZ backends
+    machine oriented (TLS, tokens, approle)
+    user oriented(user/pass, LDAP, Github)
+rich ACL for AUTHZ
+    default deny - "need to know" (least priv)
+request response auditing, fail closed (non-repudiation)
+
+
+Highly Available
+active/standby model
+    consul used for leader election (supports etcd/zookeeper)
+    automatic failover
+
+Unsealing vault
+data at rest is encrypted
+requires decryption key
+must be provided online
+
+protecting the keys
+master key is the "key to the kingdom"
+all data could be decrypted
+protect against insider attack
+"two man rule"
+
+shamir secret sharing
+protect encryption key with master key
+split master key into n shared
+t shares required
+quorum of key holders to unseal
+    default N:5, T:3
+No access (priv separation)
+
+Automated unsealing
+Shamir secret splitting for human key holders
+automated unsealing with machine key holders
+hardware devices, HSM
+Cloud key management systems
+
+
+summary
+solve the "secret sprawl" problem
+protects against insider threats (ACLs and Secret Sharing)
+protects against external threats (cryptosystem)
+applies security principles
+
+
+Identity v0.9
+
+Entities and aliases
+entity - rep of a single person or system that is consistent across logins
+    can assign policies and metadata to an entity
+alias
+    mapping between an entity and an auth backen
+
+
+
+Identity groups
+Manage entities by placing them into groups
+groups can contain both entities and other groups
+groups can have a set of policies and metadata that is inherited by the member entity or subgroups
+
+Identity groups aliases
+Mapping from internal group to an external group in a thrid party authN provider
+If part of external group: automatically add user to the Identity Group, inheriting the policies and metadata
+Currently works with LDAP, Github, and Okta auth backends
+
+K8S Auth Backend - new in  v0.8.3
+Binds Kubernetes service accounts to a Vault role
+Uses the TokenReview API to validate JWTs
+Doesn’t need any external pieces
+
+App reads svc account JWT
+app sends jwt and role name to vault
+vault validated jwt signature and verifies sa is authZ to use the role
+vault calls into the tokenreview api
+vault returns token
+
+```
+$ vault auth-enable kubernetes
+$ vault write auth/kubernetes/config \
+     token_reviewer_jwt=“...” \
+     kubernetes_host=https://192.168.99.100:8443 \
+     kubernetes_ca_cert=@/var/kubernetes/ca.crt
+
+$ vault auth-enable kubernetes
+$ vault write auth/kubernetes/config \
+     token_reviewer_jwt=“...” \
+     kubernetes_host=https://192.168.99.100:8443 \
+     kubernetes_ca_cert=@/var/kubernetes/ca.crt
+
+$ vault write auth/kubernetes/login \
+     role=demo \
+jwt=“...”  
+Key
+---
+token
+token_accessor
+token_duration
+token_renewable
+token_policies
+token_meta_role
+token_meta_service_account_name
+token_meta_service_account_namespace
+token_meta_service_account_uid
+
+
+```
+
+
+Modern Secrets Management
+Native K8S Integration
+Lots of features we didn’t cover (Dynamic SSL/TLS, SSH Brokering, MFA, etc)

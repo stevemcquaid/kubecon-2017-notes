@@ -1,0 +1,10 @@
+Microservices PAtterns with NGINX and Istio Services Mesh
+AJ Hunyady - Product Manager NGINX
+
+
+github.com/nginmesh
+runs on istio like you would with envoy
+compatible with istio 0.2.12
+
+demo
+

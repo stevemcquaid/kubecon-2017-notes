@@ -1,0 +1,186 @@
+Securing Clusters with k8s network policies
+@ahmetb
+software eng @ google cloud
+
+Agenda
+1. what are network policies
+2. how to write them, etc
+
+Network policies control traffic from/to pods
+
+Network policy API
+pre-work late 2015
+alphz v1.2 (march 2016)
+beta v1.3 (july 2016)
+stable v1.7(june 2017)
+
+thanks to
+casey davenport (tigera)
+christopher luciano (IBM)
+dan winship (Red Hat)
+
+presenter did not work on it
+
+Writing network policies
+
+first you need to know abotu levals
+
+pod:
+    app: shopping
+    tier: app
+pod:
+    app: shopping
+    tier: db
+
+empty label selector
+matchLabels: {}
+-> selects everything
+
+Anatomy of a network policy
+1) which pods does it apply to?
+2) for which direction 
+    ingress
+    egress
+
+3) rules for allowing:
+    ingress -> who can connect to this pod?
+    egress ->
+
+
+api: networking.k8s.io/v1
+kind: NetworkPolicy
+spec: 
+    podSelector:
+
+
+
+Rule 1) Traffic is allowed unless there is a Network Policy selecting the pod
+Rule 2) Traffic is denyed if there are policies selecting the pod, but none of them have any rules allowing it.
+Rule 1 + 2) You can only write rules that **allow** traffic
+
+Denying all traffic by matching to it
+pod sel: {} - select all pods
+ingress: [] - empty array indicated nothing is whitelisted
+
+Result: all ingress traffic is blocked by not allowing
+Rule 3) TRaffic is allowed if ther eis at least one policy allowing it
+
+Example: allowing some traffic
+
+
+specifying port numbers
+cant use service ports in policies, yet
+must use pod ports
+use containerPort in the PodSpec.
+
+Rule 4) Policy rules are additive. they are OR'd with each other
+def allowed(traffic):
+    return role1.allows(traffic) ||
+    role2.allows(traffic) ||
+
+
+multiple rules are combined, too (unioned)
+
+
+Rule 5) Network policies are scoped to the namespace they are deployed to.
+spec.podSelector does not select pods from other namespaces.
+
+
+If you use namespace selector
+
+limitation:
+allowing some pods from other namespaces
+(this is not possible today)
+
+3 ways to specify where traffic can come from/go to
+podselector
+namespaceselector
+ipblock
+
+The "ipBlock" selector
+
+egress rules
+almost identical to ingress rules controlls the traffic from selected pods
+
+
+egress policies actually block dns resolution
+
+you have to either: 
+    allow all dns traffic
+    add egress rule with the ip addres sof kube-dns
+
+blocking all external traffic
+spec:
+    podSelector: {}
+    egress:
+    - to:
+        - namespaceSelector: {}
+
+
+How are network policies enforced?
+Suprise!
+without a networking plugin that enforces policies, NetworkPOlicy objects are silently ignored
+install a plugin like Calico, weavenet or romana
+
+Connections are duplex (2-way)
+once A connects to B, B can send data to A, on the same connection
+(does not mean B can connect to A)
+
+Network policy is a connection level filter
+does not apply to packets
+does not terminate established connections
+
+Network policies add minimal latency
+depends on the network plugin
+    iptables vs overlay
+    implementation, caching differences
+can depend on number of policies deployed
+sub-1ms.overhead
+
+best practices
+use "default-deny-all" rules
+    first block all ingress/egress in a namespace
+    then start whitelisting for each application
+understand rule evaluation
+    rules are OR'ed (not AND'ed)
+        additivity may cause unexpected results
+    be explicit about empty vs null fields
+
+    ingress:
+    - {}
+
+    vs 
+    
+    ingress:[]
+
+    vs
+
+    ingress:
+
+    vs
+    
+    ingress:
+    -from: {}
+
+Test your policies
+try whats allowed/blocked
+test external connectivity
+    ingress: should I allow traffic from external LB
+    egress: should I allow connections to external?
+test with other namespaces
+    allow connections from/to another namespace
+use kubectl describe to verify rule syntax
+
+Learn more:
+github.com/ahmetb/kubernetes-networkpolicy-tutorial
+
+
+network policy
+---------
+pod identity
+JWT
+TLS mutual auth
+SPIFFE
+Istio
+...
+

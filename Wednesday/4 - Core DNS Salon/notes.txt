@@ -1,0 +1,145 @@
+John
+john@coredns.io
+
+https://github.com/coredns/coredns/blob/master/ADOPTERS.md
+
+
+What is CoreDNS
+cloud native, authoritative DNS server written in GO
+    not a recursive DNS server (YET)
+Successor to skyDNS2 for dynamic DNS service discovery
+flexible, plugin based, extensible request pipeline
+started and led by Miek Gieben SRE at Google
+supported by infoblox
+Hosted as an inception CNCF project
+
+Architecture
+features are contained in independent plugins
+    logging
+    caching
+    metrics
+    many more
+queries routed based on zone
+different plugin chains for different zones
+
+
+
+
+28 in tree standard plugins
+    kubernetes
+    file
+    log
+    etcd plugin - for ppl migrating from skydns
+    loadbalance
+    prometheus
+    
+external plugins
+    live outside the main repo - anywhere you can go get
+    most need a custom build
+
+based on caddy webserver for the plugin infrastructure
+
+
+Roadmap
+    kubernetes-driven features
+    community-driven features
+    policy integration (Starting as external)
+    telemetry (starting as external)
+    automate DNSSEC
+
+Policy Plugin - Active trust cloud
+CoreDNS is more than just kubernetes service discovery
+integrates with infoblox high-performance policy engine
+themis to provice ARC features
+
+github.com/infobloxopen/themis
+
+
+CoreDNS Kubernetes Integration
+Single container in the DNS pod
+Kubernetes plugin talks to the API
+Same design pattern as other components
+    CoreDNS listens for changes on teh api server
+    New services or endpoints result in new DNS records
+    CoreDNS serves up special names for services and proxies external requests out
+Of course you can also use other plugins at the same time
+
+
+Features for k8s
+implements k8s dns spec plus more
+filter records by namespace - selectively expose namespaces
+filter records by label selector - selectively expose services
+endpoint_pod_names uses pod namespace for headless service pods (kubernetes#47992)
+autopath - improves latency of queries
+"pods verified" mode = verify pod exists pod queries
+    query A records 1-2-3-4.namespace.pod.cluster.local
+    kube-dns always returns 1.2.3.4
+    coredns only returns 1.2.3.4 if there is a pod in that namespace with that IP
+
+
+CoreDNS as a Default Cluster DNS
+Planned schedule
+    k8s 1.9 - alpha
+    k8s 1.10 - beta
+    k8s 1.11 - GA
+Links 
+    Feature Issues
+    Community Proposal
+
+
+
+Autopath - the problem
+kubernetes has a long DNS search path and ndots value
+    <mnamespace>.svc.cluster.local
+    svc.clluster.local
+    cluster.local
+    plus the nodes search path
+enables flexible use of names, but leads to exta queries
+    host -v google.com
+    trying google.com.default.svc.cluster.local
+    trying google.com/svc.cluster.local
+    trying google.com.cluster.local
+    trying google.com
+    return answer
+    additional: 4
+
+
+kubernetes pods verified + autopath
+since coredns knows the namespace of the source pod IP, it knows the search path
+execute the search path server-side
+host -v google.com
+trying google.com.default.svc.cluster.local
+
+
+top 5 external services by total response time
+dns response time dropped by 66% 3ms -> 1ms
+
+
+checkout the tutorial
+
+!!!
+Policy in k8s service discovery
+insert decision in service discovery
+example use cases
+    enforce k8s RBAC in DNS
+    multi-tenant DNS
+    block if tenants of requesting and responding service differe
+    block if environment (dev/test/prod) differ
+    resolve same dns name to IP of matching tenant and/or environment
+    redirect to closeest instance of requested service
+    redirect to isntance with lowest load
+    transparently insert intermediaries in service chain
+    rolling upgrade and version constraints
+
+
+Writing external plugins
+chechout tutorial
+plugin must:
+    register itself
+    parse its setup config
+    implement Name() and ServeDNS()
+you must
+    modify *plugin.cfg* to point to your plugin
+    configure its use in your *Corefile*
+lets see one!
+

@@ -1,0 +1,338 @@
+Prometheus Salon
+
+Tom Wilkie - foudner @ Kausal
+@tom_wilkie
+tom@kausal.co
+
+
+repeat session friday @ 2pm
+
+intro to prometheus
+Frederic Branczyk
+@fredbrancz
+frederic.branczyk@coreos.com
+
+- maintainer of kube-state-metrics
+
+Prometheus
+founded at soundcloud
+2nd cncf project
+started before kubernetes
+
+Example
+observer of cars
+
+cars_total
+# HELP cars_total Total number of cars passed.
+# TYPE cars_total counter
+cars_total 4
+
+cars_total{color="white"} 2
+
+-> collected from observer at "mainstreet"
+cars_total{color="white", street="mainstreet"} 2
+
+# Is traffic congested?
+rate(sum(cars_total)[5m]) < 10
+
+# Is traffic flowing?
+rate(sum(cars_total)[5m]) > 10
+
+
+
+Whats a target?
+Http server with /metrics endpoint
+Discovered by a SD mechanism
+    static target list
+    DNS discovery
+    kubernetes discovery
+
+Kubernetes discovery
+Targets to discover
+    pods
+    nodes
+    endpoints/services
+automatically reconfigure
+    add update remove
+
+We can discover new resources at runtime without having to reconfigure prometheus
+Need monitoring system that can keep up with and and scale with highly dynamic env
+
+
+http_requests_total{code="200"} 8
+-> enrich with target metadata
+http_requests_total{pod="pod-01", service="myservice", code="200"} 8
+
+
+Alert Evaluation
+Rule 1 - Evaluate Rule/Alert
+Rule 2 - Fire alert against Alertmanager
+Repeat in *rule evaluation interval*
+
+
+Alertmanager
+    Deduplicate alerts
+    Group alerts
+    Route alerts
+    Send alerts
+- Can route alerts thru pagerduty
+- can create issue
+- etc
+
+Designing metrics
+    labels identify a time-services
+    cardinality explosions
+        no variable data in metrics
+
+http_requests_total{instance="mytargets:8080",job="myservice",code="200"} 8
+** should NOT put a request ID in here as it would create a new time series
+
+Metric Types
+    counter - eg Request Count
+    Gauge - eg Resource Usage
+    Histogram - eg Request Latency
+
+Counter rate continuation
+    since counters always increase, prometheus can auto-fix if counter drops back down to zero or goes lower than previous
+
+
+
+
+Reveal your deepest kubernetes  --secrets-- metrics
+Bob Cotton - FreshTracks.intro
+bob@freshtracks.io
+@bob_cotton
+
+All sources of metrics within kubernetes
+The new k8s metrics server
+    nodes
+    containers
+    kubelet
+    etcd
+    derived metrics (kubestatemetrics)
+horizontal pod autoscalers
+prometheus re-labeling and recording rules
+k8s cluster hierarchies and metrics agrgegations
+
+
+node_exporter
+Host metrics from the *node_exporter*
+standard host metrics
+    load average
+    cpu
+    memory
+    disk
+    network
+    many others
+1000 unique series in a typical node
+
+
+
+Container Metrics from cAdvisor
+cAdvisor is embedded into the kubelet, so we scrape the kubelet to get container metrics
+these are so-called "core" metrics
+for each container on the node
+    cpu usage (user and system) & time throttled
+    filesystem read/writes/limits
+    memory usage and limits
+    network transmit/receive/dropped
+
+
+Kubernetes metrics from the k8s API server
+Metrics about the performance of the k8s api server
+    perf of hte controller work queues
+    request rates and latencies
+    etcd helper cache work queues and cache perf
+    general process status (file descriptors/memory/cpu seconds)
+    golang status (gc/memory/threads)
+
+ETCD metrics from etcd
+etcd is the "master of all truth" within k8s cluster
+    leader existence and leader change rate
+    proposals committed/applied/pending/failed
+    disk write perf
+    network and gRPC counters
+
+k8s derived metrics from kube-state-metrics
+counts and metadata about many k8s Types
+    counts of many "nouns"
+        cronjob
+        daemonset
+        deployment
+        hpa
+        job
+        limitrange
+        namespace
+        node
+        persistentvolumeclaim
+        pod
+        replicaset
+        replicacontroller
+        resourcequota
+        service
+        statefulset
+    resource limits
+    container states
+        -ready/restarts/running/terminiated/waiting
+    _labels services just carries labels from pods
+
+source of metrics in kubernetes
+    node via the node_exporter
+    container metrics via the kubelet and cAdvisor
+    kubernetes api server
+    etcd
+    derived metrics via kube-state-metrics
+
+Scheduling and Autoscaling - the metrics pipeline
+
+The New "Metrics Server" 
+    -internal use for k8s itself
+(v1.8) - replaces heapster
+standard (versionaed and auth) API aggregated into the k8s api server
+in beta in k8s 1.8
+used by the scheduler and (eventually) the hpa
+a stripped-down version of heapster
+reports on "core" metrics (CPU/MeM/Net) gathered from cAdvisor
+for internal to k8s use only
+pluggable for custom metrics
+
+
+Labels, Re-label and Recording Rules
+Metric Metadata
+In the beginning:
+<metric name> = <metric value>
+    http_requests_total = 1.4
+Increased complexity lead to workarounds
+    region.az.instance_tyupe.instance.hostname.http_requests_total = 5439
+
+Metric Metadata - Metrics 2.0
+http_requests_total(region="us-east",
+az = "us-east-1"
+instance_type="m2.large"
+instance=
+hostname= ) = 5439
+
+
+Kubernetes Labels
+    kubernetes gives us labels on all the things
+    our scrape targets live in the context of the k8s labels
+    we want to enhance the scraped metrics labels with the k8s labels
+This is why we need to relabel rules in prometheus
+
+
+Prometheus has svc discovery from the k8s api sevrer
+then it can go and get all the things from all the things
+<relabel_config>
+    - subset of the k8s api server metrics as a set of k/v pairs
+    - happens before the scrape=
+<metric_relabel_config> - happen after the scrape
+
+
+Recording Rules
+Create a new service, derived from one or more existing series
+
+prom will not rollup data in tsdb - must write a recording rule
+
+# The name of the time series to output to. Must be a valid metric name.
+record: <string>
+
+expr: sum)rate(container_cpu)usage_seconds_total(pod_name=~"^?)
+label: <string>
+record: pod_name
+
+
+Core Metrics Aggregation
+K8s clusters form a heirarchy
+We can aggregate the core metrics to any level
+This allows for some interesting monitoring opportunities
+    using P8s "recording rules" aggregate the core metrics at every kevel
+    insights into all levels of your kubernetes cluster
+This also applies to any custom application metric
+
+
+Architecture
+prometheus for each cluster
+set of global prometheus to watch those prometheus'
+
+Install path for k8s
+    - prometheus operator
+        - whole bunch of alerting rules for k8s (35 rules)
+    - helm charts are shaky right now - should be in shape pretty soon
+
+
+Whats New Prometheus 2.0
+Goutham Veer...
+Co-maintainer of rhte storage engine
+
+Prometheus 2.0
+New storage engine
+broke everything that we wanted to break
+fixed most, if not all, of all long-standing issues
+All on the roadmap
+
+Fabian Reinartz has a talk from PromCon 2017 - Storaing 16 Bytes at Scale
+
+
+Performance
+k8s cluster + dedicated prom nodes
+800 microservice instances + kubernetes components
+120000 samples/second
+300000 active time series
+Swap out 50% of the pods every 10 minutes
+
+
+Features?
+Staleness
+    when you make an instance query at t=t0
+        we consider t=t0-5m to t=t0
+    
+    This messes up Alerts & Queries
+
+Backups!
+Couldnt do live-backups
+Had to stop prom, copy files, and then restart
+DOWNTIME
+
+Fixed
+hit an endpoint and 
+--web.endable-admin-api
+has a snapshot backup endpoint
+curl
+
+Rule Groups
+rules and alerts ran concurrently
+for example
+instance:network_errors:rate1m = <query>
+
+Alert if 
+instance:network_errors:rate1 > 500
+
+
+interval per rule-group
+
+
+Rules language
+nice simple language for rules
+but yet another language and no way to accomodate groups
+people have code that generates these rules - ugly
+
+moved to yaml for rules groups
+
+Future:
+Atomicity and Isolation in ingestion
+Dynamic Retention
+
+migration
+https://prometheus.io/docs/prometheus/2.0/migration
+remote read being key
+
+Goutham
+twitter: @putadent
+github: @gouthamve
+
+run two prom scrapers at one cluster to have HA - tom built company to skirt this
+
+
+
+
+

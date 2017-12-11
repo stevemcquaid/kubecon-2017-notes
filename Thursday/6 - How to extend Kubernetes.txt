@@ -1,0 +1,43 @@
+"Kubernetes is a large project" - 
+well established processes
+    Reviews
+    Feature proposals
+    Community meetings
+    ...
+    Stability!
+How do I get my new feature in?
+    even when its obviously so cool as persistent volume snapshots
+
+
+Simple idea: lets take snapshot of a PersistentVolume in k8s
+    present the idea to the community
+    create proposal and have it reviewed
+    write the code and have it reviewed
+    have the code merged
+
+... nope 
+    use plan b
+
+
+Custom Resources
+Custom resources
+    basic building block for easy kubernetes extentions
+    api objects(implementing the runtime.object interface)
+    dynamically added/registered
+experiment outside of kubernetes
+    kubernetes-incubator on github
+
+custom external controller
+    obj itself cant do much
+    controller talked to api server and makes use of the new objects (watches for updates)
+    takes care about registering the CRD
+
+Disadvantages
+    might need more api calls - perf penalities
+    more work fo rthe users/admins (deployments RBAC...)
+    dependencies might be more complicated to manage
+    less visible for potential users and contributors
+
+
+
+

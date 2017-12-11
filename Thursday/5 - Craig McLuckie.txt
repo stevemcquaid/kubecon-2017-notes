@@ -1,0 +1,12 @@
+Kubernetes - Road Ahead
+
+Craig McLuckie - CEO Heptio
+
+dev productivity matters
+    expert operations
+    recipe for *-as-a-service
+        technology
+        provisioning / integration api
+        ops team
+multi-cloud is happening
+enterprise is complicated
